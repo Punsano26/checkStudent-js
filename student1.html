@@ -1,214 +1,265 @@
-<!DOCTYPE html>
+\\<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance List</title>
+    <title>Student Attendance</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
         table {
+            width: 90%;
+            margin: 20px auto;
             border-collapse: collapse;
-            width: 100%;
+            background-color: #fff;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         }
+
         th, td {
-            border: 1px solid #dddddd;
+            border: 1px solid #ddd;
+            padding: 10px;
             text-align: left;
-            padding: 8px;
+            cursor: pointer;
         }
+
         th {
             background-color: #f2f2f2;
         }
-        .green-button {
-            background-color: green;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 4px 2px;
-            cursor: pointer;
-            border-radius: 4px;
+
+        td {
+            background-color: #fff;
         }
+
+        input[type="text"] {
+            padding: 8px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .green-button {
+            background-color: rgb(33, 220, 33);
+            color: rgb(210, 210, 210);
+        }
+
         .red-button {
             background-color: red;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 4px 2px;
-            cursor: pointer;
-            border-radius: 4px;
+            color: rgb(229, 235, 231);
         }
+
         .save-button {
             background-color: blue;
             color: white;
-            border: none;
-            padding: 8px 16px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 4px 2px;
-            cursor: pointer;
-            border-radius: 4px;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
+        .attended {
+            background-color: #9effa1;
+        }
+
+        .not-attended {
+            background-color: #db3619;
         }
     </style>
 </head>
 <body>
-
-    <h2>Attendance List</h2>
-
-    <input type="text" id="searchInput" placeholder="ค้นหาชื่อนักเรียน...">
-
-    <table id="attendance-list">
+    <h1>รายชื่อการเข้าเรียน</h1> 20px;">
+        <label for="id">รหัสประจำตัว:</label>
+        <input type="text" id="id">
+        <label for="name">ชื่อ:</label>
+        <input type="text" id="name">
+        <button onclick="addPerson()" class="green-button">เพิ่มบุคคล</button>
+    </div>
+    <div id="search-form" style="text-align: center; margin-bottom: 20px;">
+        <label for="search">ค้นหาชื่อ:</label>
+        <input type="text" id="search" oninput="filterNames()">
+    </div>
+    <table id="attendance-table">
         <thead>
             <tr>
-                <th>ลำดับ</th>
                 <th>รหัสประจำตัว</th>
                 <th>ชื่อ</th>
-                <th>สัปดาห์ 1</th>
-                <th>สัปดาห์ 2</th>
-                <th>สัปดาห์ 3</th>
-                <th>สัปดาห์ 4</th>
+                <th>สัปดาห์ที่ 1</th>
+                <th>สัปดาห์ที่ 2</th>
+                <th>สัปดาห์ที่ 3</th>
+                <th>สัปดาห์ที่ 4</th>
+                <th>สัปดาห์ที่ 5</th>
             </tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="attendance-list">
+        </tbody>
     </table>
-
-    <button id="saveButton" class="save-button">Save & Export</button>
+    <!-- เพิ่มปุ่มสำหรับ Export ข้อมูลในรูปแบบ JSON -->
+    <div style="text-align: center; margin-top: 20px;">
+        <button id="exportButton" class="save-button" onclick="exportDataToJson()">Export JSON</button>
+    </div>
 
     <script>
-        let modifiedData = [];
+        let originalData = [];
 
-        // ฟังก์ชันสร้าง Button
-        function createButton(row, attendance, weekIndex, studentIndex) {
-            const cell = row.insertCell();
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = attendance === 1 ? 'green-button' : 'red-button';
-            button.textContent = attendance === 1 ? 'เข้าเรียน' : 'โดดเรียน';
-            button.addEventListener('click', function() {
-                // เมื่อปุ่มถูกคลิก ให้อัปเดตค่าของ attendance ในข้อมูลและเก็บไว้ใน modifiedData
-                if (attendance === 1) {
-                    attendance = 0;
-                } else {
-                    attendance = 1;
-                }
-                modifiedData.push({
-                    studentIndex: studentIndex,
-                    weekIndex: weekIndex,
-                    attendance: attendance
-                });
-                // อัปเดตสีของปุ่ม
-                button.className = attendance === 1 ? 'green-button' : 'red-button';
-                button.textContent = attendance === 1 ? 'เข้าเรียน' : 'โดดเรียน';
-            });
-            cell.appendChild(button);
+        // ฟังก์ชันสำหรับสร้าง JSON จากข้อมูลในตาราง
+        function exportDataToJson() {
+            const table = document.getElementById('attendance-table');
+            const rows = table.getElementsByTagName('tr');
+            const data = [];
+
+            // เริ่มต้นที่ดัชนี 1 เพื่อข้ามแถวหัวตาราง
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = row.getElementsByTagName('td');
+                const rowData = {
+                    'รหัสประจำตัว': cells[0].textContent,
+                    'ชื่อ': cells[1].textContent,
+                    'สัปดาห์ที่ 1': cells[2].textContent,
+                    'สัปดาห์ที่ 2': cells[3].textContent,
+                    'สัปดาห์ที่ 3': cells[4].textContent,
+                    'สัปดาห์ที่ 4': cells[5].textContent,
+                    'สัปดาห์ที่ 5': cells[6].textContent
+                };
+                data.push(rowData);
+            }
+
+            // แปลงข้อมูลเป็น JSON string
+            const jsonData = JSON.stringify(data, null, 2);
+
+            // สร้าง Blob
+            const blob = new Blob([jsonData], { type: 'application/json' });
+
+            // สร้าง Element ลิงก์สำหรับดาวน์โหลดไฟล์ JSON
+            const a = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            a.href = url;
+            a.download = 'student_attendance.json';
+
+            // เพิ่ม Element ลิงก์ไปยัง DOM และเรียกคลิก
+            document.body.appendChild(a);
+            a.click();
+
+            // ลบ Element ลิงก์ออกจาก DOM
+            document.body.removeChild(a);
+
+            // ปลด URL object
+            URL.revokeObjectURL(url);
         }
 
-        // ฟังก์ชันโหลดข้อมูลจากไฟล์ JSON และแสดงบนหน้าเว็บ
+        function toggleAttendanceStatus(cell, week) {
+            const newValue = cell.textContent === 'มาเรียน' ? 'โดดเรียน' : 'มาเรียน';
+            cell.textContent = newValue;
+            cell.classList.toggle('not-attended');
+            cell.classList.toggle('not-attended');
+            cell.classList.toggle(newValue === 'มาเรียน' ? 'red-button' : 'green-button');
+        }
+
+        function addPerson() {
+            const idInput = document.getElementById('id');
+            const nameInput = document.getElementById('name');
+            const id = idInput.value;
+            const name = nameInput.value;
+
+            if (!id || !name) {
+                alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return;
+            }
+
+            const listContainer = document.getElementById('attendance-list');
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td>${id}</td>
+                <td>${name}</td>
+                <td onclick="toggleAttendanceStatus(this, 1)" class="green-button">มาเรียน</td>
+                <td onclick="toggleAttendanceStatus(this, 2)" class="green-button">มาเรียน</td>
+                <td onclick="toggleAttendanceStatus(this, 3)" class="green-button">มาเรียน</td>
+                <td onclick="toggleAttendanceStatus(this, 4)" class="green-button">มาเรียน</td>
+                <td onclick="toggleAttendanceStatus(this, 5)" class="green-button">มาเรียน</td>
+            `;
+            listContainer.appendChild(newRow);
+
+            // Clear input fields
+            idInput.value = '';
+            nameInput.value = '';
+        }
+
+        function filterNames() {
+            const searchInput = document.getElementById('search');
+            const searchTerm = searchInput.value.toLowerCase();
+            const filteredData = originalData.filter(person => person['ชื่อ'].toLowerCase().includes(searchTerm));
+            renderTable(filteredData);
+        }
+
+        function renderTable(data) {
+            const listContainer = document.getElementById('attendance-list');
+            listContainer.innerHTML = '';
+            data.forEach(student => {
+                const row = document.createElement('tr');
+                const idCell = document.createElement('td');
+                idCell.textContent = student['รหัสประจำตัว'];
+                const nameCell = document.createElement('td');
+                nameCell.textContent = student['ชื่อ'];
+                const week1Cell = document.createElement('td');
+                week1Cell.textContent = Math.random() > 0.5 ? 'มาเรียน' : 'โดดเรียน';
+                const week2Cell = document.createElement('td');
+                week2Cell.textContent = Math.random() > 0.5 ? 'มาเรียน' : 'โดดเรียน';
+                const week3Cell = document.createElement('td');
+                week3Cell.textContent = Math.random() > 0.5 ? 'มาเรียน' : 'โดดเรียน';
+                const week4Cell = document.createElement('td');
+                week4Cell.textContent = Math.random() > 0.5 ? 'มาเรียน' : 'โดดเรียน';
+                const week5Cell = document.createElement('td'); 
+                week5Cell.textContent = Math.random() > 0.5 ? 'มาเรียน' : 'โดดเรียน';
+
+                // เพิ่มอีเวนต์คลิกเพื่อแก้ไขการเข้าเรียนของแต่ละสัปดาห์
+                week1Cell.addEventListener('click', () => toggleAttendanceStatus(week1Cell, 1));
+                week2Cell.addEventListener('click', () => toggleAttendanceStatus(week2Cell, 2));
+                week3Cell.addEventListener('click', () => toggleAttendanceStatus(week3Cell, 3));
+                week4Cell.addEventListener('click', () => toggleAttendanceStatus(week4Cell, 4));
+                week5Cell.addEventListener('click', () => toggleAttendanceStatus(week5Cell, 5)); 
+
+                row.appendChild(idCell);
+                row.appendChild(nameCell);
+                row.appendChild(week1Cell);
+                row.appendChild(week2Cell);
+                row.appendChild(week3Cell);
+                row.appendChild(week4Cell);
+                row.appendChild(week5Cell); 
+                listContainer.appendChild(row);
+            });
+        }
+
+        // ฟังก์ชันโหลดข้อมูลจากไฟล์ JSON และแสดงบนตาราง HTML
         function loadAttendanceData() {
             fetch('student_attendance.json') // ตรงนี้ให้เปลี่ยนเส้นทางไฟล์ให้ถูกต้อง
                 .then(response => response.json())
                 .then(data => {
-                    const tableBody = document.querySelector('#attendance-list tbody');
-                    data.forEach((student, index) => {
-                        const row = tableBody.insertRow();
-                        row.insertCell(0).textContent = index + 1;
-                        row.insertCell(1).textContent = student['รหัสประจำตัว'];
-                        row.insertCell(2).textContent = student['ชื่อ'];
-                        createButton(row, student['สัปดาห์1'], 1, index);
-                        createButton(row, student['สัปดาห์2'], 2, index);
-                        createButton(row, student['สัปดาห์3'], 3, index);
-                        createButton(row, student['สัปดาห์4'], 4, index);
-                    });
+                    originalData = data;
+                    renderTable(data);
                 })
                 .catch(error => console.error('Error loading the data:', error));
-        }
-
-        // ฟังก์ชันบันทึกข้อมูลการเข้าเรียนที่มีการเปลี่ยนแปลงไปยังฐานข้อมูล
-        function saveAttendanceData() {
-            fetch('update_attendance.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(modifiedData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                // ตรวจสอบคำตอบจากเซิร์ฟเวอร์หรือประมวลผลต่อไปตามที่ต้องการ
-                console.log('Data saved successfully:', data);
-                // เรียกใช้ฟังก์ชัน exportModifiedData เพื่อสร้างไฟล์ database ที่มีการเปลี่ยนแปลง
-                exportModifiedData();
-                // เคลียร์ข้อมูลที่ถูกแก้ไขใน modifiedData
-                modifiedData = [];
-                // สามารถเพิ่มการแจ้งเตือนหรือประมวลผลต่อไปตามที่ต้องการได้ที่นี่
-            })
-            .catch(error => {
-                console.error('Error saving attendance data:', error);
-            });
-        }
-
-        // ฟังก์ชัน export ข้อมูลที่มีการเปลี่ยนแปลงไปเป็นไฟล์ JSON
-        function exportModifiedData() {
-            // กำหนดชื่อไฟล์ที่ต้องการ export
-            const fileName = 'modified_data.json';
-            // สร้างข้อความ JSON จากข้อมูลที่มีการเปลี่ยนแปลงไป
-            const jsonData = JSON.stringify(modifiedData);
-            // สร้าง Blob จากข้อความ JSON
-            const blob = new Blob([jsonData], { type: 'application/json' });
-            // สร้าง URL จาก Blob
-            const url = window.URL.createObjectURL(blob);
-            // สร้าง element ลิงก์
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = fileName;
-            // คลิกที่ลิงก์เพื่อดาวน์โหลดไฟล์
-            document.body.appendChild(link);
-            link.click();
-            // ลบ element ลิงก์
-            document.body.removeChild(link);
-        }
-
-        // ฟังก์ชันค้นหานักเรียน
-        function searchStudents() {
-            const input = document.getElementById('searchInput');
-            const filter = input.value.toUpperCase();
-            const table = document.getElementById('attendance-list');
-            const rows = table.getElementsByTagName('tr');
-
-            // วนลูปทุกแถวและซ่อนแถวที่ไม่ตรงกับเงื่อนไขค้นหา
-            for (let i = 0; i < rows.length; i++) {
-                const nameCell = rows[i].getElementsByTagName('td')[2]; // เลือกเซลล์ที่มีชื่อ
-                if (nameCell) {
-                    const nameValue = nameCell.textContent || nameCell.innerText;
-                    if (nameValue.toUpperCase().indexOf(filter) > -1) {
-                        rows[i].style.display = '';
-                    } else {
-                        rows[i].style.display = 'none';
-                    }
-                }
-            }
         }
 
         // เรียกใช้ฟังก์ชันเมื่อหน้าเว็บโหลดเสร็จสมบูรณ์
         window.onload = function() {
             loadAttendanceData();
-            document.getElementById('searchInput').addEventListener('keyup', searchStudents);
-            document.getElementById('saveButton').addEventListener('click', saveAttendanceData);
+            document.getElementById('exportButton').addEventListener('click', exportDataToJson);
         };
     </script>
-
 </body>
 </html>
-
-
-
-
-
-
